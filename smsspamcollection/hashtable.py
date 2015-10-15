@@ -3,6 +3,7 @@
 
 import sys, os
 import re
+import filtering as filt
 
 def create_dictionary(filename):
 	hashtable = {}
@@ -19,3 +20,21 @@ def create_dictionary(filename):
 						hashtable[words[ii]] = 1
 
 	return hashtable
+
+
+
+
+
+def main():
+	good = create_dictionary('nonspam.txt')
+	bad = create_dictionary('spam.txt')
+
+	probabilty = {}
+
+	# for word in good:
+	# 	probabilty[word] = filt.populate_third_dict(good, bad, word, 4827, 747)
+	#
+	# for word in bad:
+	# 	probabilty[word] = filt.populate_third_dict(good, bad, word, 4827, 747)
+
+	
