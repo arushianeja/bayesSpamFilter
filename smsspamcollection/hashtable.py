@@ -40,6 +40,9 @@ def main(argv):
 	probv = np.zeros(len(words))
 	kk = 0
 
+	# Not sure if this is the right thing to do. I'm not considering the chance
+	# of the same word occurring more than once. If that happens, the probabilty
+	# will just occur multiple times in the prodv array.
 	for ii in range(len(words)):
 		# Only calculate the probabilty of non-empty strings.
 		if words[ii] != '':
