@@ -4,6 +4,7 @@
 import sys, os
 import re
 import filtering as filt
+import numpy as np
 
 def create_dictionary(filename):
 	hashtable = {}
@@ -25,11 +26,36 @@ def create_dictionary(filename):
 
 
 
-def main():
+def main(argv):
 	good = create_dictionary('nonspam.txt')
 	bad = create_dictionary('spam.txt')
 
-	probabilty = {}
+	# Read one line from the standard input.
+	line = sys.stdin.readline()
+
+	# Split it in words.
+	words = re.split('\W+', line)
+
+	# Start with a numpy array of zeros.
+	probv = np.zeros(len(words))
+	kk = 0
+
+	for ii in range(len(words)):
+		# Only calculate the probabilty of non-empty strings.
+		if words[ii] != '':
+			probv[kk] = filt.populate_third_dict(good,bad,words[ii],4827,747)
+			kk += 1
+
+	# Let's crop the array to account only for the non-empty words.
+	probv = probv[:kk]
+
+	# This is the function we couldn't decypher last night (I think!).
+	spamprob = probv.prod() / (probv.prod()+(1-probv).prod())
+
+	if spamprob > 0.9:
+		print('It\'s spam!')
+	else:
+		print('It\'s legit!')
 
 	# for word in good:
 	# 	probabilty[word] = filt.populate_third_dict(good, bad, word, 4827, 747)
@@ -37,4 +63,6 @@ def main():
 	# for word in bad:
 	# 	probabilty[word] = filt.populate_third_dict(good, bad, word, 4827, 747)
 
-	
+
+if __name__ == '__main__':
+	main(sys.argv[1:])
