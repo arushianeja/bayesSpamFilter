@@ -13,6 +13,7 @@ def create_dictionary(filename):
 		for line in fp:
 			words = re.split('\W+', line)
 
+			# Start from the second word (ignore the ham/spam marker).
 			for ii in range(1,len(words)):
 				if words[ii] != '':
 					if words[ii] in hashtable:
@@ -23,18 +24,9 @@ def create_dictionary(filename):
 	return hashtable
 
 
-
-
-
-def main(argv):
-	good = create_dictionary('nonspam.txt')
-	bad = create_dictionary('spam.txt')
-
-	# Read one line from the standard input.
-	line = sys.stdin.readline()
-
-	# Split it in words.
-	words = re.split('\W+', line)
+def calc_spamprob(message, good, bad):
+	# Split the line in words.
+	words = re.split('\W+', message)
 
 	# Start with a numpy array of zeros.
 	probv = np.zeros(len(words))
@@ -53,12 +45,26 @@ def main(argv):
 	probv = probv[:kk]
 
 	# This is the function we couldn't decypher last night (I think!).
-	spamprob = probv.prod() / (probv.prod()+(1-probv).prod())
+	return probv.prod() / (probv.prod()+(1-probv).prod())
 
-	if spamprob > 0.9:
-		print('It\'s spam!')
-	else:
-		print('It\'s legit!')
+
+
+def main(argv):
+	good = create_dictionary('halfnonspam.txt')
+	bad = create_dictionary('halfspam.txt')
+
+	with open('2ndhalfspam.txt', 'r') as fp:
+		for line in fp:
+			spamprob = calc_spamprob(line[5:], good, bad)
+			if spamprob <= .9:
+				print('False negative')
+
+	with open('2ndhalfnonspam.txt', 'r') as fp:
+		for line in fp:
+			spamprob = calc_spamprob(line[4:], good, bad)
+			if spamprob > .9:
+				print('False positive')
+
 
 	# for word in good:
 	# 	probabilty[word] = filt.populate_third_dict(good, bad, word, 4827, 747)
