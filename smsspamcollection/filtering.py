@@ -1,14 +1,20 @@
-def populate_third_dict(good, bad, word, ngood, nbad):
-    g = 0
-    b = 0
+def spamicity_of_given_word(good, bad, word, ngood, nbad):
+    g = 0.0
+    b = 0.0
     if word in good:
-        g = 2 * good[word]
+        g = float(2 * good[word])
     if word in bad:
-        b = bad[word]
+        b = float(bad[word])
 
 
     if (g+b >= 5):
-        returnVal = max(0.01, (min (0.99, min(1, b/nbad)/(min(1, (g/ngood)+ min(1, (b/nbad)))))))
+        print ("ngood : " + str(ngood) + "      nbad : " + str(nbad))
+        x = b/nbad
+        y = g/ngood
+        print (" b : "+ str(b) + " g : " + str(g))
+        print (" x : " + str(x) + " y : " + str(y))
+        a = min(1, x)/min(1, y + min(1, x))
+        returnVal = max(0.01, min (0.99, a))
         return returnVal
     else:
         return 0.4

@@ -1,70 +1,77 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python2.7
 
 
 import sys, os
 import re
 import filtering as filt
 import numpy as np
+import re
+from collections import defaultdict
+
+class PhonePresent:
+	pass
+
+PHONE_NUMBER = PhonePresent()
 
 def create_dictionary(filename):
-	hashtable = {}
+	features_freq = defaultdict(float)
 
 	with open(filename, 'r') as fp:
 		for line in fp:
 			words = re.split('\W+', line)
-
+			sentence = words[1:]
+			features = featurise(sentence)
 			# Start from the second word (ignore the ham/spam marker).
-			for ii in range(1,len(words)):
-				if words[ii] != '':
-					if words[ii] in hashtable:
-						hashtable[words[ii]] += 1
-					else:
-						hashtable[words[ii]] = 1
+			for f in features:
+				features_freq[f] += 1
+	return features_freq
 
-	return hashtable
 
+def featurise(temp_sentence):
+	sentence = []
+	for word in temp_sentence:
+		if re.match("^[0-9]{5}[0-9]*$", word):
+			sentence.append(PHONE_NUMBER)
+		else:
+			sentence.append(word)
+	bigrams = zip(sentence, sentence[1:])
+	trigrams = zip(sentence, sentence[1:], sentence[2:])
+
+	return sentence + bigrams #+ trigrams
 
 def calc_spamprob(message, good, bad):
 	# Split the line in words.
-	words = re.split('\W+', message)
-
-	# Start with a numpy array of zeros.
-	probv = np.zeros(len(words))
-	kk = 0
-
-	# Not sure if this is the right thing to do. I'm not considering the chance
-	# of the same word occurring more than once. If that happens, the probabilty
-	# will just occur multiple times in the prodv array.
-	for ii in range(len(words)):
-		# Only calculate the probabilty of non-empty strings.
-		if words[ii] != '':
-			probv[kk] = filt.populate_third_dict(good,bad,words[ii],4827,747)
-			kk += 1
-
-	# Let's crop the array to account only for the non-empty words.
-	probv = probv[:kk]
-
-	# This is the function we couldn't decypher last night (I think!).
+	features = featurise(re.split('\W+', message))
+	probv = np.array([ filt.spamicity_of_given_word(good,bad,f,4827,747) for f in features])
 	return probv.prod() / (probv.prod()+(1-probv).prod())
 
+def is_spam(message, good, bad):
+	spamprob = calc_spamprob(message, good, bad)
 
+	return spamprob > 0.5
 
 def main(argv):
 	good = create_dictionary('halfnonspam.txt')
 	bad = create_dictionary('halfspam.txt')
+	count_correct = 0.0
+	count_incorrect = 0.0
 
 	with open('2ndhalfspam.txt', 'r') as fp:
 		for line in fp:
-			spamprob = calc_spamprob(line[5:], good, bad)
-			if spamprob <= .9:
-				print('False negative')
+			if is_spam(line[len("spam "):], good, bad):
+				count_correct+=1
+			else:
+				count_incorrect+=1
 
 	with open('2ndhalfnonspam.txt', 'r') as fp:
 		for line in fp:
-			spamprob = calc_spamprob(line[4:], good, bad)
-			if spamprob > .9:
-				print('False positive')
+			if not is_spam(line[len("ham "):], good, bad):
+				count_correct+=1
+			else:
+				count_incorrect+=1
 
+	accuracy = (count_correct/ (count_correct + count_incorrect))
+	print("Accuracy is: "+ str(accuracy))
 
 	# for word in good:
 	# 	probabilty[word] = filt.populate_third_dict(good, bad, word, 4827, 747)
